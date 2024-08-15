@@ -1,0 +1,70 @@
+services:
+  nginx:
+    build: 
+      context: ./requirements/nginx
+      args:
+        - CERTIFICATE
+        - CERTIFICATE_KEY
+    container_name: nginx
+    env_file: .env
+    restart: on-failure
+    ports:
+      - '443:443'
+    depends_on:
+      - wordpress
+    networks:
+      - inception
+    volumes:
+      - wordpress:/var/www/wordpress
+    
+  mariadb:
+    build: ./requirements/mariadb
+    container_name: mariadb
+    env_file: .env
+    restart: on-failure
+    expose:
+      - '3306'
+    networks:
+      - inception
+    volumes:
+      - mariadb:/var/lib/mysql 
+    healthcheck:
+      test: mysqladmin ping -h localhost -u root -p${SQL_ROOT_PASSWORD}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  wordpress:
+    build: ./requirements/wordpress
+    container_name: wordpress
+    env_file: .env
+    restart: on-failure
+    expose:
+      - '9000'
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - inception
+    volumes:
+      - wordpress:/var/www/wordpress
+
+volumes:
+  wordpress:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/psotto-m/data/wordpress
+  mariadb:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/psotto-m/data/mariadb
+
+networks:
+  inception:
+    name: inception
+    driver: bridge
