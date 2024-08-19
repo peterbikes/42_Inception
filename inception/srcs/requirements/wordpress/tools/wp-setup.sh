@@ -1,6 +1,5 @@
 #!/bin/bash
 
-wp core is-installed --path='/var/www/wordpress' --allow-root
 wp core install --url="https://$WP_URL" \
 	--title=$WP_TITLE \
 	--admin_user=$WP_ADMIN_USER \
